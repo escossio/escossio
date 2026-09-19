@@ -27,6 +27,29 @@ My projects are usually built around the same idea: **make complex systems obser
 | **[Andy Android](https://github.com/escossio/andy-android)** | Native Android client for Andy, built around versioned Client API / SDK boundaries and explicit identity/authentication flows. | Kotlin · Android · SDK/API contracts · Identity |
 | **[TCP Brain](https://github.com/escossio/tcp-brain)** | TCP intelligence layer that consolidates detector output, exposes an HTTP API and serves an operational dashboard. | Python · FastAPI · Linux · Observability · Production operations |
 
+## Distributed CI & reliability engineering
+
+I also build the infrastructure around the software. For Attention Router, I designed a **heterogeneous distributed CI control plane** that profiles real test duration and schedules work according to measured worker capacity instead of splitting jobs evenly.
+
+```mermaid
+flowchart LR
+    G[GitHub / exact commit SHA] --> C[CI Control Plane]
+    C --> P[Duration-aware scheduler]
+    P --> W3[CI03<br/>KVM virtualized worker]
+    P --> W1[CI01<br/>Bare-metal worker]
+    P --> W2[CI02<br/>Bare-metal worker]
+    W3 --> R[Aggregated evidence]
+    W1 --> R
+    W2 --> R
+    R --> A[GitHub Actions<br/>independent certification]
+```
+
+On the measured PostgreSQL integration suite, the scheduler distributed **403 tests across 41 files** and brought worker wall time from **286 s to 99 s**. The complete control-plane invocation finished in about **103 s** — roughly **64% less elapsed time / 2.78× faster** than the initial single-worker baseline.
+
+The design uses exact-SHA execution, disposable worktrees, synthetic PostgreSQL instances, persistent dependency caches, automatic re-profiling and a fail-closed rule when the test-file set changes. GitHub-hosted CI remains an independent final certification boundary.
+
+Architecture and benchmark evidence: **[Attention Router distributed CI lab](https://github.com/escossio/attention-router/tree/main/ops/provisioning/distributed-ci-lab)**.
+
 ## Tools & technologies
 
 <p>
